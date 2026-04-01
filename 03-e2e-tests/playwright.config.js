@@ -4,13 +4,14 @@ export default defineConfig({
   testDir: './tests',
 
   // Overall timeout per test
-  timeout: 45_000,
+  timeout: 30_000,
 
   // Timeout for each expect() assertion
-  expect: { timeout: 10_000 },
+  expect: { timeout: 5_000 },
 
   use: {
-    baseURL: 'https://gowandr.app',
+    baseURL: 'http://localhost:4321',
+    headless: false,
     viewport: { width: 1280, height: 720 },
 
     // Save a screenshot and video when a test fails — useful for debugging

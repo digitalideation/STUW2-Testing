@@ -3,8 +3,8 @@
   "description": "Workshop Section 3 — End-to-End Tests",
   "type": "module",
   "scripts": {
+    "start": "node server.js",
     "test": "playwright test",
-    "test:headed": "playwright test --headed",
     "test:ui": "playwright test --ui",
     "install:browsers": "playwright install chromium"
   },

@@ -10,7 +10,7 @@ Compared to unit and API tests:
 - Catches bugs that only appear in the real UI
 - Can be fragile (layout changes, network delays, animations)
 
-You're going to test `https://gowandr.app` — a live hiking route finder.
+You are going to test a **local signup form** — a small web app that lives right here in this folder.
 
 ---
 
@@ -33,22 +33,33 @@ npm install
 npm run install:browsers   # downloads Chromium (~120 MB, one-time)
 ```
 
-**Run tests (no browser visible — fast):**
+---
+
+## Running the app and the tests
+
+E2E tests need a running application to test against. You start the two pieces separately — just like in a real project.
+
+**Step 1 — start the app** (in one terminal):
+```bash
+npm start
+```
+You should see:
+```
+Signup app running at http://localhost:4321
+```
+Open that URL in your browser and have a look at the signup form before writing any tests.
+
+**Step 2 — run the tests** (in a second terminal):
 ```bash
 npm test
 ```
 
-**Run tests with the browser visible — recommended for this workshop:**
-```bash
-npm run test:headed
-```
+The browser will open automatically so you can watch what Playwright is doing. That is intentional — seeing the browser is the best way to understand what your test is actually doing.
 
-**Run with Playwright's interactive UI:**
+**Run with Playwright's interactive UI** (great for debugging):
 ```bash
 npm run test:ui
 ```
-
-> Tip: Use `--headed` when learning — watching the browser is the best way to understand what your test is doing.
 
 ---
 
@@ -56,61 +67,69 @@ npm run test:ui
 
 ```
 03-e2e-tests/
-├── playwright.config.js   ← timeouts, browser settings
+├── signup.html            ← the web app being tested
+├── server.js              ← tiny static file server (no dependencies)
+├── playwright.config.js   ← timeouts, browser settings, base URL
 └── tests/
-    └── gowandr.spec.js    ← your tests
+    └── signup.spec.js     ← the tests
 ```
 
 ---
 
-## Understanding the site
+## Understanding the app
 
-Before writing tests, open `https://gowandr.app/map` in your browser and spend 2–3 minutes exploring:
+Before writing tests, open `http://localhost:4321` in your browser and try the form:
 
-- Where is the search box?
-- What happens when you type a location?
-- What are the filter pills?
-- How do you know when results have loaded?
+- What happens when you submit with empty fields?
+- What happens if the passwords don't match?
+- What does a successful signup look like?
 
-Use **DevTools → Inspector** (right-click → Inspect) to find the CSS class names of elements you want to interact with.
+Use **DevTools → Inspector** (right-click → Inspect) to find the `id` attributes of elements you want to interact with.
 
 Key selectors used in the starter code:
 
 | Selector | Element |
 |----------|---------|
-| `.search-input` | The location text input |
-| `.suggestion-item` | Autocomplete dropdown items |
-| `.animated-hike-path` | Hike route paths drawn on the map |
-| `.filter-pill` | Filter toggle buttons at the top |
-| `.popup-done-button` | Confirm button inside a filter popup |
+| `#signup-form` | The signup form |
+| `#name` | Full name input |
+| `#email` | Email input |
+| `#password` | Password input |
+| `#confirm` | Confirm password input |
+| `button[type="submit"]` | The submit button |
+| `#name-error` | Validation error for name |
+| `#email-error` | Validation error for email |
+| `#password-error` | Validation error for password |
+| `#confirm-error` | Validation error for confirm password |
+| `#success` | Success banner shown after valid submission |
+| `#success-message` | The text inside the success banner |
 
 ---
 
-## Exercise 1 — Apply a filter (~25 min)
+## Exercise 1 — Mismatched passwords (~15 min)
 
-Open `tests/gowandr.spec.js` and find the **Exercise 1** test.
+Open `tests/signup.spec.js` and find the **Exercise 2** test (mismatched passwords).
 
-The test already performs a search. Your job is to complete it:
+The skeleton is already there. Your job:
 
-1. Click one of the filter pills
-2. Wait for the results to update
-3. Assert that the results changed
+1. Fill in name, email, and a valid password
+2. Type a *different* value into the confirm field
+3. Click submit
+4. Assert that `#confirm-error` is visible
+5. Assert that `#success` is **not** visible
 
-**Tips:**
-- Use `npm run test:headed` so you can see what's happening
-- Use `page.pause()` to freeze the browser mid-test (Playwright's debugger will open)
-- Use `await page.locator('...').click()` to click elements
-- Use `page.waitForResponse(...)` to wait for an API call to complete
-
-**Checkpoint:** The test passes and makes a real assertion about the filter result.
+**Checkpoint:** The test passes with a real assertion.
 
 ---
 
-## Exercise 2 — Write your own scenario (~25 min)
+## Exercise 2 — Write your own scenario (~20 min)
 
-Find the **Exercise 2** test and write a complete test for a scenario of your choice.
+Find the **Exercise 3** test and write a complete test for a scenario of your choice.
 
-Ideas are listed in the test file. Pick one that interests you.
+Ideas listed in the test file:
+- Verify the page title
+- Check that a password shorter than 8 characters shows the password error
+- Check that an invalid email (e.g. `notanemail`) shows the email error
+- Verify that fixing an error after a failed submit makes the red border disappear
 
 **Checkpoint:** Your test passes and tests something meaningful.
 
@@ -120,10 +139,10 @@ Ideas are listed in the test file. Pick one that interests you.
 
 | Problem | Solution |
 |---------|----------|
-| Test fails with "timeout" | The element didn't appear — use `--headed` to watch what happens |
-| Element not found | Open DevTools and verify the CSS class name |
+| "Connection refused" | The server is not running — open a terminal and run `npm start` first |
+| Test fails with "timeout" | The element didn't appear — watch the browser to see what happened |
+| Element not found | Open DevTools and verify the `id` or selector |
 | Test passes but shouldn't | Your selector might be matching something unexpected |
-| `page.waitForResponse` times out | The API call happened before the await — restructure with `Promise.all` |
 
 ---
 
@@ -131,12 +150,13 @@ Ideas are listed in the test file. Pick one that interests you.
 
 ```javascript
 // Navigate
-await page.goto('/map')
+await page.goto('/')
 
 // Find elements
-page.locator('.class-name')        // by CSS class
-page.locator('text=Click me')      // by visible text
-page.locator('[data-testid="foo"]') // by data attribute
+page.locator('#id')                    // by id
+page.locator('.class-name')            // by CSS class
+page.locator('button[type="submit"]')  // by attribute
+page.locator('text=Click me')          // by visible text
 
 // Interact
 await locator.click()
@@ -145,22 +165,20 @@ await locator.press('Enter')
 
 // Wait and assert
 await expect(locator).toBeVisible()
+await expect(locator).not.toBeVisible()
 await expect(locator).toHaveText('Hello')
+await expect(locator).toContainText('partial')
 await expect(page).toHaveTitle('My Page')
 
-// Wait for network
-await page.waitForResponse(res => res.url().includes('api'))
-await page.waitForLoadState('networkidle')
-
-// Debug
-await page.pause()  // opens Playwright Inspector
+// Debug — freezes the browser and opens Playwright Inspector
+await page.pause()
 ```
 
 ---
 
 ## Bonus challenges
 
-- **Mock the API:** Use `page.route(...)` to intercept the API call and return fake data. Does the UI handle it correctly?
-- **Mobile view:** Add `test.use({ viewport: { width: 390, height: 844 } })` and test the mobile layout
-- **Screenshot test:** Take a screenshot after the results load and compare it visually
-- **Accessibility:** Check that all interactive elements have accessible labels
+- **Mock a server response:** Use `page.route('/api/signup', ...)` to simulate a "email already taken" error from a backend
+- **Mobile view:** Add `test.use({ viewport: { width: 390, height: 844 } })` and check the form still works
+- **Screenshot:** Call `await page.screenshot({ path: 'result.png' })` after a successful signup and inspect the image
+- **Keyboard navigation:** Tab through all fields and submit with Enter — does it work without a mouse?
