@@ -6,17 +6,18 @@ The simplest test you can write is an `if` statement that throws when something 
 
 ```javascript
 function add(a, b) {
-  return a + b
+  return a + b;
 }
 
 if (add(2, 3) !== 5) {
-  throw new Error('Expected add(2, 3) to return 5')
+  throw new Error("Expected add(2, 3) to return 5");
 }
 ```
 
 That's it. No framework needed. Run the file — if nothing crashes, the test passed.
 
 The problem is that as you write dozens or hundreds of these, you need:
+
 - A way to run them all at once and see a summary
 - Clear output showing which one failed and why
 - A consistent, readable way to write the checks
@@ -24,11 +25,11 @@ The problem is that as you write dozens or hundreds of these, you need:
 That's why testing frameworks like **Vitest** and **Jest** exist. They replace the `if` statements with readable functions:
 
 ```javascript
-import { test, expect } from 'vitest'
+import { test, expect } from "vitest";
 
-test('adds two numbers', () => {
-  expect(add(2, 3)).toBe(5)
-})
+test("adds two numbers", () => {
+  expect(add(2, 3)).toBe(5);
+});
 ```
 
 The result is the same — either it passes or it fails — but now the framework handles running everything and formatting the output.
@@ -43,7 +44,7 @@ Two days later someone reports the password reset link is broken. Your change ac
 
 This is called a **regression** — code that worked before, broken by a later change.
 
-Tests catch regressions automatically. Every time you change code, you re-run the tests. If something breaks, you know immediately — and you know *which* test failed, which points to *where* the problem is.
+Tests catch regressions automatically. Every time you change code, you re-run the tests. If something breaks, you know immediately — and you know _which_ test failed, which points to _where_ the problem is.
 
 Without tests, the only way to know if you broke something is to manually test every feature after every change. That doesn't scale.
 
@@ -58,9 +59,9 @@ Not all tests work the same way. There are three main types, each with different
 A unit test checks **one function in isolation**.
 
 ```javascript
-test('rejects an email with no domain', () => {
-  expect(isValidEmail('user@')).toBe(false)
-})
+test("rejects an email with no domain", () => {
+  expect(isValidEmail("user@")).toBe(false);
+});
 ```
 
 - Runs in milliseconds
@@ -79,15 +80,15 @@ Unit tests are the foundation. Write them for any function with real logic.
 An API test sends a **real HTTP request** to a real service and checks the response.
 
 ```javascript
-test('returns hikes near Bern', async () => {
-  const res = await fetch('https://api.gowandr.app/find-hikes', {
-    method: 'POST',
-    body: JSON.stringify({ mode: 'top', lat: 46.948, lng: 7.447 }),
-  })
-  expect(res.status).toBe(200)
-  const hikes = await res.json()
-  expect(hikes.length).toBeGreaterThan(0)
-})
+test("returns hikes near Bern", async () => {
+  const res = await fetch("https://api.gowandr.app/find-hikes", {
+    method: "POST",
+    body: JSON.stringify({ mode: "top", lat: 46.948, lng: 7.447 }),
+  });
+  expect(res.status).toBe(200);
+  const hikes = await res.json();
+  expect(hikes.length).toBeGreaterThan(0);
+});
 ```
 
 - Takes seconds (network round-trip)
@@ -103,12 +104,12 @@ test('returns hikes near Bern', async () => {
 An E2E test **controls a real browser** and simulates a user clicking through your application.
 
 ```javascript
-test('user can search for hikes', async ({ page }) => {
-  await page.goto('https://gowandr.app/map')
-  await page.locator('.search-input').fill('Bern')
-  await page.locator('.suggestion-item').first().click()
-  await expect(page.locator('.animated-hike-path').first()).toBeVisible()
-})
+test("user can search for hikes", async ({ page }) => {
+  await page.goto("https://gowandr.app/map");
+  await page.locator(".search-input").fill("Bern");
+  await page.locator(".suggestion-item").first().click();
+  await expect(page.locator(".animated-hike-path").first()).toBeVisible();
+});
 ```
 
 - Takes 5–30 seconds per test
@@ -122,13 +123,13 @@ test('user can search for hikes', async ({ page }) => {
 
 ## How they compare
 
-| | Unit | API | E2E |
-|---|---|---|---|
-| **Speed** | Milliseconds | Seconds | Seconds–minutes |
-| **What breaks them** | Logic errors | API changes, network | UI changes, timing |
-| **Failure diagnosis** | Easy — one function | Moderate | Hard — many moving parts |
-| **Confidence** | Low (logic only) | Medium | High (real system) |
-| **When to write them** | For all non-trivial functions | For important API contracts | For critical user flows |
+|                        | Unit                          | API                         | E2E                      |
+| ---------------------- | ----------------------------- | --------------------------- | ------------------------ |
+| **Speed**              | Milliseconds                  | Seconds                     | Seconds–minutes          |
+| **What breaks them**   | Logic errors                  | API changes, network        | UI changes, timing       |
+| **Failure diagnosis**  | Easy — one function           | Moderate                    | Hard — many moving parts |
+| **Confidence**         | Low (logic only)              | Medium                      | High (real system)       |
+| **When to write them** | For all non-trivial functions | For important API contracts | For critical user flows  |
 
 ---
 
@@ -160,6 +161,7 @@ You need all three layers, in the right proportions.
 An E2E test that passes 9 times out of 10 is almost worse than no test. When a test fails intermittently, developers start ignoring failures. They assume it's "probably fine." Eventually a real bug gets ignored too.
 
 Flakiness usually comes from:
+
 - **Timing** — the test clicks before the page has fully loaded
 - **Network** — an external API was slow or returned an unexpected response
 - **State** — a previous test left data behind that affects this one
