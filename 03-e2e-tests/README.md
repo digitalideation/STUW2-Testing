@@ -51,15 +51,10 @@ Open that URL in your browser and have a look at the signup form before writing 
 
 **Step 2 — run the tests** (in a second terminal):
 ```bash
-npm test
-```
-
-The browser will open automatically so you can watch what Playwright is doing. That is intentional — seeing the browser is the best way to understand what your test is actually doing.
-
-**Run with Playwright's interactive UI** (great for debugging):
-```bash
 npm run test:ui
 ```
+
+This opens Playwright's interactive UI — you can see the browser, step through each action, and inspect what the test is doing at every point.
 
 ---
 

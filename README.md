@@ -71,7 +71,7 @@ Vitest and Jest share almost the same syntax. Learning one means you can read an
 |---|-------|------|
 | [01 — Unit Tests](./01-unit-tests/) | Validating an email address | Vitest |
 | [02 — API Tests](./02-api-tests/) | Testing a real hiking API | Vitest + fetch |
-| [03 — E2E Tests](./03-e2e-tests/) | Testing a real website end-to-end | Playwright |
+| [03 — E2E Tests](./03-e2e-tests/) | Testing a local signup form end-to-end | Playwright |
 
 Finish with [Testing Concepts](./TESTING-CONCEPTS.md) — a short explanation of how all three types relate.
 
@@ -134,27 +134,25 @@ On first run, the HTTP basics tests will pass. The filter tests have `TODO` plac
 
 ## Section 03 — E2E Tests
 
-**What you'll do:** Automate a real browser to interact with `https://gowandr.app` and verify it works correctly.
+**What you'll do:** Automate a real browser to fill in a signup form and verify the form behaves correctly.
 
 ```bash
 cd 03-e2e-tests
 npm install
 npm run install:browsers   # downloads Chromium — required once (~120 MB)
-npm test                   # runs tests headlessly (no browser window)
+npm start                  # start the local signup app (keep this terminal open)
 ```
 
-To **watch the browser while tests run** (recommended for learning):
+Then, in a second terminal:
 ```bash
-npm run test:headed
+npm run test:ui            # opens Playwright's interactive UI — recommended for learning
 ```
 
 **Your tasks:**
-1. Run `npm run test:headed` and watch the example test — it searches for hikes near Bern
-2. Read `tests/gowandr.spec.js` and understand each step of the example test
-3. Complete Exercise 1: click a filter pill after searching and assert the results changed
-4. Complete Exercise 2: write your own test for a different user scenario
-
-> Open `https://gowandr.app/map` in your browser and use DevTools (right-click → Inspect) to find CSS class names of elements you want to interact with.
+1. Open `http://localhost:4321` in your browser and try the signup form manually
+2. Run `npm run test:ui` and watch the two example tests run — see each step highlighted in the browser
+3. Complete Exercise 1: test that mismatched passwords show an error
+4. Complete Exercise 2: write your own test scenario
 
 ---
 

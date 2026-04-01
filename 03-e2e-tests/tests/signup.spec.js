@@ -9,8 +9,7 @@ import { test, expect } from '@playwright/test'
 //   - submitting the form
 //   - seeing success or validation error messages
 //
-// Run (headless, fast):          npm test
-// Run (browser visible, slow):   npm run test:headed
+// Run:   npm run test:ui
 // ─────────────────────────────────────────────────────────────────────────────
 
 test.describe('Signup form', () => {
