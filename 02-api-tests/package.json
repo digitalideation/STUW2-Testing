@@ -1,0 +1,12 @@
+{
+  "name": "02-api-tests",
+  "description": "Workshop Section 2 — API Tests",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run --reporter=verbose",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "vitest": "^2.0.0"
+  }
+}
