@@ -5,6 +5,7 @@
   "scripts": {
     "start": "node server.js",
     "test": "playwright test",
+    "test:headed": "SLOWMO=1 playwright test --headed",
     "test:ui": "playwright test --ui",
     "install:browsers": "playwright install chromium"
   },

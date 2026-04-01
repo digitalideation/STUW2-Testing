@@ -11,7 +11,7 @@ export default defineConfig({
 
   use: {
     baseURL: 'http://localhost:4321',
-    headless: false,
+    slowMo: process.env.SLOWMO ? 800 : 0,
     viewport: { width: 1280, height: 720 },
 
     // Save a screenshot and video when a test fails — useful for debugging

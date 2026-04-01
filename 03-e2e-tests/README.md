@@ -74,6 +74,9 @@ npm run test:ui
     └── signup.spec.js     ← the tests
 ```
 
+**Why `.spec.js`?**
+`spec` is short for *specification*. A test file *specifies* how the software is supposed to behave. The convention comes from the Ruby testing world and spread across the JavaScript ecosystem. `.spec.js` and `.test.js` mean exactly the same thing — you'll see both in the wild.
+
 ---
 
 ## Understanding the app
