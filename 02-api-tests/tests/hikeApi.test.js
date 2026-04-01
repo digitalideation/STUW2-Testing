@@ -6,16 +6,25 @@ import { describe, test, expect } from 'vitest'
 // Endpoint: POST https://api.gowandr.app/find-hikes
 // Body: JSON
 //
-// Two modes:
-//   "off"  — returns hikes based on filters you specify
-//   "top"  — returns top hikes near a given location (lat/lng)
+// Response shape:  { "hikes": [ {...}, {...}, ... ] }
+//   Note: the hikes are nested inside a "hikes" key — not a plain array.
+//
+// Modes:
+//   "off"  — returns hikes from the full database, filtered by your parameters
+//   "top"  — returns the closest hikes to a given location
+//
+// Useful response fields:
+//   hike.title         — the name of the hike
+//   hike.distance_km   — length of the route in kilometres (returned as a string, e.g. "8.50")
+//   hike.isloop        — true = round trip, false = one way
+//   hike.ascent_meters — total ascent in metres
 // ─────────────────────────────────────────────────────────────────────────────
 
 const API_URL = 'https://api.gowandr.app/find-hikes'
 
 /**
- * Helper: sends a POST request to the API.
- * Returns the raw Response — call `await res.json()` to read the body.
+ * Sends a POST request to the API. Returns the raw Response object.
+ * Use `await res.json()` to read the body — it has shape { hikes: [...] }.
  */
 async function findHikes(body = {}) {
   return fetch(API_URL, {
@@ -29,7 +38,7 @@ async function findHikes(body = {}) {
 // STARTER TESTS — HTTP basics
 //
 // Run: npm test
-// All of these should pass right away (they test the protocol, not the data).
+// All of these should pass right away.
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('HTTP basics', () => {
@@ -55,34 +64,39 @@ describe('HTTP basics', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('Response structure', () => {
-  test('response body is an array', async () => {
+  test('response body has a "hikes" key', async () => {
     const res = await findHikes({ mode: 'off' })
     const data = await res.json()
-    expect(Array.isArray(data)).toBe(true)
+    // The API wraps results: { "hikes": [...] }
+    // It does NOT return a plain array.
+    expect(data).toHaveProperty('hikes')
+  })
+
+  test('"hikes" is an array', async () => {
+    const res = await findHikes({ mode: 'off' })
+    const { hikes } = await res.json()
+    expect(Array.isArray(hikes)).toBe(true)
   })
 
   test('array contains at least one hike', async () => {
     const res = await findHikes({ mode: 'off' })
-    const hikes = await res.json()
+    const { hikes } = await res.json()
     expect(hikes.length).toBeGreaterThan(0)
   })
 
   // ── DISCOVERY TEST ────────────────────────────────────────────────────────
-  // This test just logs the first hike object to the console.
-  // Run it and look at the output — you need the field names for later tests.
-  //
-  // Look for: a name field, a distance/length field, a direction/type field
+  // This test logs the first hike object so you can see all its fields.
+  // Read the console output — you'll need the field names for the exercises.
   // ─────────────────────────────────────────────────────────────────────────
   test('DISCOVERY: log the first hike object to understand its structure', async () => {
     const res = await findHikes({ mode: 'off' })
-    const hikes = await res.json()
+    const { hikes } = await res.json()
 
     console.log('\n📋 First hike object:')
     console.log(JSON.stringify(hikes[0], null, 2))
     console.log('\n🔑 Available fields:', Object.keys(hikes[0]))
     console.log(`\n📊 Total hikes returned: ${hikes.length}`)
 
-    // Not a real assertion — just making sure we got data
     expect(hikes.length).toBeGreaterThan(0)
   })
 })
@@ -90,82 +104,75 @@ describe('Response structure', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 // STARTER TESTS — "top" mode (location-based results)
 //
-// "top" mode returns the best hikes near a given coordinate.
+// "top" mode returns the closest hikes to a given location.
+// The location is passed as: { "start": { "lat": ..., "lon": ... } }
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('"top" mode — results near a location', () => {
-  // Bern, Switzerland
-  const BERN = { lat: 46.948, lng: 7.447 }
+  // Bern, Switzerland — note the key is "lon", not "lng"
+  const BERN = { start: { lat: 46.948, lon: 7.447 } }
 
   test('returns hikes near Bern', async () => {
     const res = await findHikes({ mode: 'top', ...BERN })
     expect(res.status).toBe(200)
-    const hikes = await res.json()
+    const { hikes } = await res.json()
     expect(Array.isArray(hikes)).toBe(true)
     expect(hikes.length).toBeGreaterThan(0)
   })
 
   test('DISCOVERY: show hike names near Bern', async () => {
     const res = await findHikes({ mode: 'top', ...BERN })
-    const hikes = await res.json()
+    const { hikes } = await res.json()
     console.log(`\n🗺️  ${hikes.length} hikes near Bern:`)
     hikes.slice(0, 5).forEach((h, i) => {
-      // Adjust the field name below if your discovery test showed a different one
-      console.log(`  ${i + 1}. ${h.name ?? h.title ?? JSON.stringify(h).slice(0, 60)}`)
+      console.log(`  ${i + 1}. ${h.title}  (${h.distance_km} km, ${h.isloop ? 'loop' : 'one way'})`)
     })
   })
 
-  test('"top" mode near a different city returns results too', async () => {
-    // Zurich, Switzerland
-    const ZURICH = { lat: 47.3769, lng: 8.5417 }
-    const res = await findHikes({ mode: 'top', ...ZURICH })
+  test('"top" mode near Zurich also returns results', async () => {
+    const res = await findHikes({ mode: 'top', start: { lat: 47.3769, lon: 8.5417 } })
     expect(res.status).toBe(200)
-    const hikes = await res.json()
+    const { hikes } = await res.json()
     expect(hikes.length).toBeGreaterThan(0)
   })
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
-// EXERCISE 1 — Filter tests
+// EXERCISE 1 — Length filter tests
 //
-// Use the field names you found in the discovery test above.
-// Replace the ??? comments with real assertions.
+// The field name for hike length in the response is: distance_km
 //
-// Goal: verify that the API actually applies the filters correctly.
+// Your task: fill in the assertions marked with TODO.
+// After filling them in, all three tests should pass.
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('"off" mode — length filters (Exercise 1)', () => {
   test('minlength: all returned hikes should be at least this long', async () => {
     const MIN_KM = 8
     const res = await findHikes({ mode: 'off', minlength: MIN_KM })
-    const hikes = await res.json()
+    const { hikes } = await res.json()
 
     console.log(`\nWith minlength=${MIN_KM}: got ${hikes.length} hikes`)
-    if (hikes.length > 0) {
-      console.log('First hike length field:', hikes[0])
-    }
-
     expect(hikes.length).toBeGreaterThan(0)
 
-    // TODO: Replace ??? with the real field name for hike length
-    // (find it in the discovery test output above)
-    //
+    // TODO: check that every hike satisfies the filter.
+    // Hint: distance_km is a string ("8.50"), so convert it first: Number(hike.distance_km)
     // for (const hike of hikes) {
-    //   expect(hike.???).toBeGreaterThanOrEqual(MIN_KM)
+    //   expect(Number(hike.distance_km)).toBeGreaterThanOrEqual(MIN_KM)
     // }
   })
 
   test('maxlength: all returned hikes should be at most this long', async () => {
     const MAX_KM = 5
     const res = await findHikes({ mode: 'off', maxlength: MAX_KM })
-    const hikes = await res.json()
+    const { hikes } = await res.json()
 
     console.log(`\nWith maxlength=${MAX_KM}: got ${hikes.length} hikes`)
+    expect(hikes.length).toBeGreaterThan(0)
 
-    // TODO: Add your assertion here
-    //
+    // TODO: check that every hike satisfies the filter
     // for (const hike of hikes) {
-    //   expect(hike.???).toBeLessThanOrEqual(MAX_KM)
+    //   expect(Number(hike.distance_km)).toBeLessThanOrEqual(MAX_KM)
     // }
   })
 
@@ -173,15 +180,14 @@ describe('"off" mode — length filters (Exercise 1)', () => {
     const MIN_KM = 5
     const MAX_KM = 12
     const res = await findHikes({ mode: 'off', minlength: MIN_KM, maxlength: MAX_KM })
-    const hikes = await res.json()
+    const { hikes } = await res.json()
 
     expect(hikes.length).toBeGreaterThan(0)
 
-    // TODO: Assert both bounds for every hike
-    //
+    // TODO: check both bounds for every hike
     // for (const hike of hikes) {
-    //   expect(hike.???).toBeGreaterThanOrEqual(MIN_KM)
-    //   expect(hike.???).toBeLessThanOrEqual(MAX_KM)
+    //   expect(Number(hike.distance_km)).toBeGreaterThanOrEqual(MIN_KM)
+    //   expect(Number(hike.distance_km)).toBeLessThanOrEqual(MAX_KM)
     // }
   })
 })
@@ -189,45 +195,49 @@ describe('"off" mode — length filters (Exercise 1)', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 // EXERCISE 2 — Direction filter
 //
-// The API supports filtering by direction (e.g. loop routes vs. one-way).
-// First, discover what values are used — then filter by one.
+// The API filter parameter is called "direction".
+// Valid values: "Round Trip"  (loop hikes — isloop: true in the response)
+//               "One Way"     (non-loop hikes — isloop: false in the response)
+//
+// Notice: the filter value ("Round Trip") doesn't match the response field
+// name ("isloop"). This is common with real APIs.
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('"off" mode — direction filter (Exercise 2)', () => {
-  test('DISCOVERY: what direction values exist in the response?', async () => {
+  test('DISCOVERY: show the isloop distribution across hikes', async () => {
     const res = await findHikes({ mode: 'off' })
-    const hikes = await res.json()
+    const { hikes } = await res.json()
 
-    // Try different field names until you find the right one
-    const directionField = 'direction' // might also be 'route_type', 'type', etc.
-    const values = [...new Set(hikes.map(h => h[directionField]))]
-    console.log(`\n🧭 Unique values for "${directionField}":`, values)
+    const loops = hikes.filter(h => h.isloop === true).length
+    const oneWay = hikes.filter(h => h.isloop === false).length
+    console.log(`\n🧭 isloop distribution:`)
+    console.log(`  Round Trip (isloop: true):  ${loops} hikes`)
+    console.log(`  One Way (isloop: false):    ${oneWay} hikes`)
   })
 
-  test('filtering by direction returns only matching hikes', async () => {
-    // Step 1: Get all hikes and find a valid direction value
-    const allRes = await findHikes({ mode: 'off' })
-    const allHikes = await allRes.json()
+  test('direction "Round Trip" returns only loop hikes', async () => {
+    const res = await findHikes({ mode: 'off', direction: 'Round Trip' })
+    const { hikes } = await res.json()
 
-    // TODO: Find the real field name and use it here
-    const direction = allHikes[0]?.direction // adjust field name as needed
-    console.log('\nTesting direction filter with:', direction)
+    console.log(`\nRound Trip filter: ${hikes.length} hikes`)
+    expect(hikes.length).toBeGreaterThan(0)
 
-    if (!direction) {
-      console.log('⚠️  Could not find a direction value — check the field name')
-      return
-    }
+    // TODO: check that every hike is a loop
+    // for (const hike of hikes) {
+    //   expect(hike.isloop).toBe(true)
+    // }
+  })
 
-    // Step 2: Filter by that direction
-    const filteredRes = await findHikes({ mode: 'off', direction })
-    const filtered = await filteredRes.json()
+  test('direction "One Way" returns only non-loop hikes', async () => {
+    const res = await findHikes({ mode: 'off', direction: 'One Way' })
+    const { hikes } = await res.json()
 
-    console.log(`Filtered to direction="${direction}": ${filtered.length} hikes`)
-    expect(filtered.length).toBeGreaterThan(0)
+    console.log(`\nOne Way filter: ${hikes.length} hikes`)
+    expect(hikes.length).toBeGreaterThan(0)
 
-    // Step 3: Verify every returned hike actually matches
-    // for (const hike of filtered) {
-    //   expect(hike.direction).toBe(direction)
+    // TODO: check that no hike is a loop
+    // for (const hike of hikes) {
+    //   expect(hike.isloop).toBe(false)
     // }
   })
 })
@@ -235,40 +245,44 @@ describe('"off" mode — direction filter (Exercise 2)', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 // EXERCISE 3 — Edge cases and invalid inputs
 //
-// What happens when you send unusual or invalid data?
-// Run each test and observe — then add an assertion that matches the behavior.
+// These tests already pass — but they only log the response.
+// Add an assertion to each one based on what you observe.
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('Edge cases (Exercise 3)', () => {
-  test('impossible range (minlength > maxlength): what does the API return?', async () => {
+  test('impossible range (minlength > maxlength): returns empty hikes array', async () => {
     const res = await findHikes({ mode: 'off', minlength: 100, maxlength: 1 })
     const data = await res.json()
 
     console.log('\nImpossible range — status:', res.status)
-    console.log('Response:', JSON.stringify(data).slice(0, 200))
+    console.log('Response:', JSON.stringify(data))
 
-    // What do you expect? An empty array? An error? A 400 status?
-    // Add your assertion here based on what you observe:
-    // expect(???).???
+    // The API returns 200 with an empty hikes array — add the assertion:
+    // expect(res.status).toBe(???)
+    // expect(data.hikes.length).toBe(???)
   })
 
-  test('minlength of 0: should behave the same as no filter', async () => {
-    const withZero = await (await findHikes({ mode: 'off', minlength: 0 })).json()
-    const withNone = await (await findHikes({ mode: 'off' })).json()
+  test('unknown mode returns 400 with an error message', async () => {
+    const res = await findHikes({ mode: 'unknown_mode' })
+    const data = await res.json()
+
+    console.log('\nUnknown mode — status:', res.status)
+    console.log('Response:', JSON.stringify(data))
+
+    // The API returns 400 with a { detail: "..." } error — add the assertion:
+    // expect(res.status).toBe(???)
+    // expect(data).toHaveProperty('detail')
+  })
+
+  test('minlength of 0 behaves the same as no filter', async () => {
+    const { hikes: withZero } = await (await findHikes({ mode: 'off', minlength: 0 })).json()
+    const { hikes: withNone } = await (await findHikes({ mode: 'off' })).json()
 
     console.log(`\nminlength=0: ${withZero.length} hikes`)
     console.log(`no filter:   ${withNone.length} hikes`)
 
-    // Are these the same? Should they be?
+    // Are these the same? Add an assertion based on what you observe.
     // expect(withZero.length).toBe(withNone.length)
-  })
-
-  test('unknown mode: what does the API do?', async () => {
-    const res = await findHikes({ mode: 'unknown_mode' })
-    console.log('\nUnknown mode — status:', res.status)
-    const data = await res.json()
-    console.log('Response:', JSON.stringify(data).slice(0, 200))
-    // Add your assertion here
   })
 
   // Write your own edge case below
@@ -280,9 +294,10 @@ describe('Edge cases (Exercise 3)', () => {
 //
 // Ideas:
 //   - Verify that "top" mode near the same city always returns the same results
-//     (is the API deterministic?)
-//   - Find the longest hike in the entire dataset
-//   - Combine "top" mode (location) + minlength/maxlength (filter)
-//   - Write a test that measures response time and fails if it's too slow
-//   - Verify that all hike names are strings (use hikes.every(...))
+//     (is the API deterministic? call it twice and compare)
+//   - Find the longest hike in the full dataset
+//   - Combine "top" mode with minlength/maxlength — does filtering still work?
+//   - Test that all hike names are non-empty strings:
+//       expect(hikes.every(h => typeof h.name === 'string' && h.name.length > 0)).toBe(true)
+//   - Write a test that fails if the API takes longer than 3 seconds
 // ─────────────────────────────────────────────────────────────────────────────

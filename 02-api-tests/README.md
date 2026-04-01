@@ -20,20 +20,39 @@ POST https://api.gowandr.app/find-hikes
 Content-Type: application/json
 ```
 
+**Response shape:**
+
+```json
+{ "hikes": [ { "name": "...", "distance_km": 8.5, "isloop": true, ... }, ... ] }
+```
+
+The hikes are nested under a `"hikes"` key — not a plain array.
+
 **Modes:**
 
 | Mode | What it does |
 |------|-------------|
-| `"off"` | Returns hikes matching your filters, from the full database |
-| `"top"` | Returns the best hikes near a given location (`lat` + `lng`) |
+| `"off"` | Returns hikes from the full database, filtered by your parameters |
+| `"top"` | Returns the closest hikes to a given location |
 
-**Filters (for `"off"` mode):**
+**Filters (work with any mode):**
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `minlength` | number | Minimum hike length in km |
 | `maxlength` | number | Maximum hike length in km |
-| `direction` | string | Filter by route type (e.g. loop, one-way) |
+| `direction` | string | `"Round Trip"` (loops) or `"One Way"` (non-loops) |
+| `min_ascent` / `max_ascent` | number | Ascent range in metres |
+| `elevation` | string | `"up"`, `"down"`, or `"flat"` |
+
+**Key response fields per hike:**
+
+| Field | Type | Meaning |
+|-------|------|---------|
+| `title` | string | Name of the route |
+| `distance_km` | string | Length in kilometres (e.g. `"8.50"`) — use `Number(hike.distance_km)` to compare |
+| `isloop` | boolean | `true` = round trip, `false` = one way |
+| `ascent_meters` | number | Total ascent in metres |
 
 **Example payloads:**
 
@@ -41,8 +60,8 @@ Content-Type: application/json
 // Off mode with length filters
 { "mode": "off", "minlength": 5, "maxlength": 15 }
 
-// Top mode near Bern, Switzerland
-{ "mode": "top", "lat": 46.948, "lng": 7.447 }
+// Top mode near Bern — location goes inside a "start" object, key is "lon" not "lng"
+{ "mode": "top", "start": { "lat": 46.948, "lon": 7.447 } }
 ```
 
 ---
